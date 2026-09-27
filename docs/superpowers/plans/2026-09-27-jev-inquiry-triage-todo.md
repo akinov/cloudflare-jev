@@ -4,22 +4,13 @@
 
 別セッションはここから続ける。仕様は `docs/superpowers/specs/2026-09-27-jev-inquiry-triage-design.md`。タスクの中身は `docs/superpowers/plans/2026-09-27-jev-inquiry-triage.md`。
 
-ブランチは `feature/jev-triage`。コミットはしていない。作業ツリーは未追跡の実装一式。
+ブランチは `feature/jev-triage`。Task 6 までコミット済み。Task 7 の画面は実装済み（ブラウザ確認は未）。
 
 ## 次にやること
 
-1. `test/api.test.ts` の TypeScript エラーを直す。`pnpm exec tsc --noEmit` が次の7件で落ちる。実行時の `pnpm exec vitest run test/api.test.ts` は 9 件成功している。`response.json()` が `unknown` なので、読む箇所に型を付ける。
-   - `test/api.test.ts:98` `extraJson`
-   - `test/api.test.ts:106`
-   - `test/api.test.ts:117`
-   - `test/api.test.ts:165`
-   - `test/api.test.ts:166`
-   - `test/api.test.ts:181`
-   - `test/api.test.ts:182`
-2. Task 6（HTTP API）を直したあと、仕様レビューとコード品質レビューをサブエージェントにかけ、指摘の妥当性を確認してから次へ進む。
-3. Task 7: `public/index.html`。トークンは `sessionStorage` のみ。`GET /api/presets` で選択肢と指示文・criteria を出す。件名と本文を送り、`decision.action`、`reasons`、`signals`、`answers` を表示する。仕様の5件を入力欄へ入れる。CORS は付けない。`public/.gitkeep` は画面を置いたら消してよい。
-4. 画面はブラウザで、トークン保存、プリセット表示、送信、サンプル投入まで確認する。`pnpm dev` の前に gitignore 済みの `.dev.vars` へ `TRIAGE_TOKEN=` を書く。値はソースと `wrangler.jsonc` に置かない。
-5. 全テストは `pnpm exec vitest run`。Workers のテストランナーはローカルの Wrangler ログに書くため、サンドボックスでは権限が要ることがある。
+1. 画面はブラウザで、トークン保存、プリセット表示、送信、サンプル投入まで確認する。`pnpm dev` の前に gitignore 済みの `.dev.vars` へ `TRIAGE_TOKEN=` を書く。値はソースと `wrangler.jsonc` に置かない。
+2. 全テストは `pnpm exec vitest run`。Workers のテストランナーはローカルの Wrangler ログに書くため、サンドボックスでは権限が要ることがある。
+3. 実装ブランチの統合（merge / PR）は別途判断。
 
 ## 完了
 
@@ -32,8 +23,8 @@
 | 3. decide | 完了 | `test/decide.test.ts` 19 件 |
 | 4. Bearer | 完了 | `test/bearer.test.ts` 5 件 |
 | 5. 推論の結合 | 完了 | `test/triage.test.ts` 5 件 |
-| 6. HTTP API | 実装済み、型エラーが残る。レビュー前 | `test/api.test.ts` 9 件は実行成功。`tsc` は上記7件 |
-| 7. 試す画面 | 未着手 | `public/index.html` は無い |
+| 6. HTTP API | 完了（サブエージェントレビュー済み） | `test/api.test.ts` 9 件、`tsc --noEmit` OK |
+| 7. 試す画面 | 実装済み、ブラウザ確認待ち | `public/index.html` |
 
 ## 計画から変えたところ
 

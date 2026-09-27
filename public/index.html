@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>jev 問い合わせトリアージ</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f4f5;
+        --card: #fff;
+        --border: #d4d4d8;
+        --text: #18181b;
+        --muted: #71717a;
+        --accent: #2563eb;
+        --danger: #b91c1c;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #09090b;
+          --card: #18181b;
+          --border: #3f3f46;
+          --text: #fafafa;
+          --muted: #a1a1aa;
+          --accent: #60a5fa;
+          --danger: #f87171;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 3rem;
+      }
+      h1 {
+        font-size: 1.35rem;
+        margin: 0 0 0.25rem;
+      }
+      .lead {
+        color: var(--muted);
+        margin: 0 0 1.5rem;
+        font-size: 0.95rem;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1rem 1.15rem;
+        margin-bottom: 1rem;
+      }
+      section h2 {
+        font-size: 1rem;
+        margin: 0 0 0.75rem;
+      }
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+      input[type='text'],
+      input[type='password'],
+      select,
+      textarea {
+        width: 100%;
+        font: inherit;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        background: var(--bg);
+        color: var(--text);
+      }
+      textarea {
+        min-height: 8rem;
+        resize: vertical;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin-top: 0.5rem;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: 0.35rem;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        padding: 0.45rem 0.85rem;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .samples {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .samples button {
+        text-align: left;
+      }
+      .preset-meta {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 0.75rem;
+      }
+      .question-block {
+        border-top: 1px solid var(--border);
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+      .question-block:first-of-type {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+      }
+      .question-block h3 {
+        font-size: 0.95rem;
+        margin: 0 0 0.35rem;
+      }
+      .question-block dl {
+        margin: 0.35rem 0 0;
+      }
+      .question-block dt {
+        font-weight: 600;
+        margin-top: 0.35rem;
+      }
+      .question-block dd {
+        margin: 0.15rem 0 0;
+        color: var(--muted);
+      }
+      pre {
+        margin: 0;
+        padding: 0.75rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 0.35rem;
+        overflow: auto;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .status {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+      .status.error {
+        color: var(--danger);
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>jev 問い合わせトリアージ</h1>
+      <p class="lead">ローカルまたはデプロイ済み Worker 上の API を試す画面です。トークンはブラウザの sessionStorage のみに保存します。</p>
+
+      <section aria-labelledby="auth-heading">
+        <h2 id="auth-heading">認証</h2>
+        <label for="token">TRIAGE_TOKEN</label>
+        <input id="token" type="password" autocomplete="off" placeholder="Bearer トークン" />
+        <div class="row">
+          <button type="button" id="save-token">保存してプリセットを読み込む</button>
+          <span class="status" id="auth-status"></span>
+        </div>
+      </section>
+
+      <section aria-labelledby="form-heading" class="hidden" id="triage-panel">
+        <h2 id="form-heading">問い合わせ</h2>
+        <label for="preset">プリセット</label>
+        <select id="preset"></select>
+        <div class="preset-meta" id="preset-description"></div>
+        <div id="preset-questions"></div>
+
+        <label for="subject" style="margin-top: 1rem">件名</label>
+        <input id="subject" type="text" maxlength="200" />
+
+        <label for="body" style="margin-top: 0.75rem">本文</label>
+        <textarea id="body" maxlength="8000"></textarea>
+
+        <div class="row" style="margin-top: 0.75rem">
+          <button type="button" class="primary" id="submit">トリアージを実行</button>
+          <span class="status" id="submit-status"></span>
+        </div>
+      </section>
+
+      <section aria-labelledby="samples-heading" class="hidden" id="samples-panel">
+        <h2 id="samples-heading">サンプル（5件）</h2>
+        <p class="preset-meta">仕様の確認用サンプル。期待 action の目安はボタンラベルに記載しています。</p>
+        <div class="samples" id="samples"></div>
+      </section>
+
+      <section aria-labelledby="result-heading" class="hidden" id="result-panel">
+        <h2 id="result-heading">結果</h2>
+        <p><strong>decision.action</strong>: <span id="result-action"></span></p>
+        <label>reasons</label>
+        <pre id="result-reasons"></pre>
+        <label>signals</label>
+        <pre id="result-signals"></pre>
+        <label>answers</label>
+        <pre id="result-answers"></pre>
+        <label>その他（model / usage）</label>
+        <pre id="result-meta"></pre>
+      </section>
+    </main>
+    <script>
+      const STORAGE_KEY = 'jev-triage-token'
+      const tokenInput = document.getElementById('token')
+      const authStatus = document.getElementById('auth-status')
+      const triagePanel = document.getElementById('triage-panel')
+      const samplesPanel = document.getElementById('samples-panel')
+      const resultPanel = document.getElementById('result-panel')
+      const presetSelect = document.getElementById('preset')
+      const presetDescription = document.getElementById('preset-description')
+      const presetQuestions = document.getElementById('preset-questions')
+      const subjectInput = document.getElementById('subject')
+      const bodyInput = document.getElementById('body')
+      const submitStatus = document.getElementById('submit-status')
+      const submitButton = document.getElementById('submit')
+
+      /** @type {Array<{ id: string, description?: string, questions: Record<string, unknown>, policy: unknown }>} */
+      let presetList = []
+
+      const samples = [
+        {
+          label: '届かない注文（support + urgent の目安）',
+          subject: '注文が届きません',
+          body: '先週注文した商品がまだ届いていません。至急確認をお願いします。明日までに必要です。',
+        },
+        {
+          label: '請求書の金額（billing の目安）',
+          subject: '請求書について',
+          body: '今月の請求書の金額が契約内容と異なっているようです。内訳を確認してください。',
+        },
+        {
+          label: '採用応募（recruit の目安）',
+          subject: '採用について',
+          body: '貴社のエンジニアポジションに応募したいです。選考プロセスを教えてください。',
+        },
+        {
+          label: '製品導入の売り込み（salesPitch の目安）',
+          subject: '貴社向けのご提案',
+          body: '当社のSaaS製品を御社の業務効率化にご導入いただけませんか。無料トライアルもご用意しています。',
+        },
+        {
+          label: '短い一文（needs_review の目安）',
+          subject: '',
+          body: '確認お願いします。',
+        },
+      ]
+
+      function storedToken() {
+        return sessionStorage.getItem(STORAGE_KEY) ?? ''
+      }
+
+      function setAuthStatus(message, isError = false) {
+        authStatus.textContent = message
+        authStatus.classList.toggle('error', isError)
+      }
+
+      function setSubmitStatus(message, isError = false) {
+        submitStatus.textContent = message
+        submitStatus.classList.toggle('error', isError)
+      }
+
+      function authHeaders() {
+        const token = storedToken()
+        if (!token) return null
+        return { Authorization: `Bearer ${token}` }
+      }
+
+      async function apiFetch(path, init = {}) {
+        const headers = authHeaders()
+        if (!headers) throw new Error('トークンが未設定です')
+        const response = await fetch(path, {
+          ...init,
+          headers: {
+            ...headers,
+            ...(init.headers ?? {}),
+          },
+        })
+        const text = await response.text()
+        let json
+        try {
+          json = text ? JSON.parse(text) : null
+        } catch {
+          json = { raw: text }
+        }
+        if (!response.ok) {
+          const err = new Error(json?.error ?? response.statusText)
+          err.status = response.status
+          err.body = json
+          throw err
+        }
+        return json
+      }
+
+      function renderCriteria(criteria) {
+        if (Array.isArray(criteria)) {
+          const dl = document.createElement('dl')
+          criteria.forEach((label, index) => {
+            const dt = document.createElement('dt')
+            dt.textContent = String(index)
+            const dd = document.createElement('dd')
+            dd.textContent = label
+            dl.append(dt, dd)
+          })
+          return dl
+        }
+        if (criteria && typeof criteria === 'object') {
+          const dl = document.createElement('dl')
+          for (const [key, value] of Object.entries(criteria)) {
+            const dt = document.createElement('dt')
+            dt.textContent = key
+            const dd = document.createElement('dd')
+            dd.textContent = String(value)
+            dl.append(dt, dd)
+          }
+          return dl
+        }
+        return document.createTextNode('—')
+      }
+
+      function renderPresetDetail() {
+        const id = presetSelect.value
+        const preset = presetList.find((p) => p.id === id)
+        presetQuestions.replaceChildren()
+        if (!preset) {
+          presetDescription.textContent = ''
+          return
+        }
+        presetDescription.textContent = preset.description ?? ''
+        for (const [key, question] of Object.entries(preset.questions)) {
+          const block = document.createElement('div')
+          block.className = 'question-block'
+          const title = document.createElement('h3')
+          title.textContent = `${key} (${question.type})`
+          const instructions = document.createElement('p')
+          instructions.textContent = question.instructions ?? ''
+          block.append(title, instructions)
+          if (question.criteria !== undefined) {
+            const criteriaLabel = document.createElement('p')
+            const criteriaTitle = document.createElement('strong')
+            criteriaTitle.textContent = 'criteria'
+            criteriaLabel.append(criteriaTitle)
+            block.append(criteriaLabel, renderCriteria(question.criteria))
+          }
+          presetQuestions.append(block)
+        }
+      }
+
+      function fillSample(sample) {
+        subjectInput.value = sample.subject
+        bodyInput.value = sample.body
+        bodyInput.focus()
+      }
+
+      function showResult(data) {
+        resultPanel.classList.remove('hidden')
+        document.getElementById('result-action').textContent = data.decision?.action ?? '—'
+        document.getElementById('result-reasons').textContent = JSON.stringify(data.decision?.reasons ?? [], null, 2)
+        document.getElementById('result-signals').textContent = JSON.stringify(data.decision?.signals ?? {}, null, 2)
+        document.getElementById('result-answers').textContent = JSON.stringify(data.answers ?? {}, null, 2)
+        document.getElementById('result-meta').textContent = JSON.stringify(
+          { preset: data.preset, model: data.model, usage: data.usage },
+          null,
+          2,
+        )
+      }
+
+      async function loadPresets() {
+        setAuthStatus('読み込み中…')
+        const data = await apiFetch('/api/presets')
+        presetList = data.presets ?? []
+        presetSelect.replaceChildren()
+        for (const preset of presetList) {
+          const option = document.createElement('option')
+          option.value = preset.id
+          option.textContent = preset.id
+          presetSelect.append(option)
+        }
+        if (presetList.length === 0) {
+          throw new Error('プリセットがありません')
+        }
+        renderPresetDetail()
+        triagePanel.classList.remove('hidden')
+        samplesPanel.classList.remove('hidden')
+        setAuthStatus('プリセットを読み込みました')
+      }
+
+      async function saveTokenAndLoadPresets() {
+        const typed = tokenInput.value.trim()
+        const token = typed || storedToken()
+        if (!token) {
+          setAuthStatus('トークンを入力してください', true)
+          return
+        }
+        if (typed) {
+          sessionStorage.setItem(STORAGE_KEY, typed)
+          tokenInput.value = ''
+        }
+        try {
+          await loadPresets()
+        } catch (error) {
+          setAuthStatus(formatError(error), true)
+        }
+      }
+
+      document.getElementById('save-token').addEventListener('click', () => {
+        void saveTokenAndLoadPresets()
+      })
+
+      presetSelect.addEventListener('change', renderPresetDetail)
+
+      submitButton.addEventListener('click', async () => {
+        setSubmitStatus('送信中…')
+        submitButton.disabled = true
+        resultPanel.classList.add('hidden')
+        try {
+          const payload = {
+            subject: subjectInput.value,
+            body: bodyInput.value,
+            preset: presetSelect.value,
+          }
+          const data = await apiFetch('/api/triage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          showResult(data)
+          setSubmitStatus('完了')
+        } catch (error) {
+          setSubmitStatus(formatError(error), true)
+        } finally {
+          submitButton.disabled = false
+        }
+      })
+
+      function formatError(error) {
+        if (error.body) {
+          return `${error.status ?? ''} ${JSON.stringify(error.body)}`.trim()
+        }
+        return error.message ?? String(error)
+      }
+
+      const samplesRoot = document.getElementById('samples')
+      for (const sample of samples) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.textContent = sample.label
+        button.addEventListener('click', () => fillSample(sample))
+        samplesRoot.append(button)
+      }
+
+      if (storedToken()) {
+        void saveTokenAndLoadPresets()
+      }
+    </script>
+  </body>
+</html>
