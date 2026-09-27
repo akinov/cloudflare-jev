@@ -1,9 +1,9 @@
-import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
+import { factory } from '../src/factory'
 import { bearer } from '../src/middleware/bearer'
 
 function app() {
-  return new Hono<{ Bindings: CloudflareBindings }>().use('*', bearer).get('/secret', (c) => c.json({ ok: true }))
+  return factory.createApp().use('*', bearer).get('/secret', (c) => c.json({ ok: true }))
 }
 
 function bindings(token: string): CloudflareBindings {

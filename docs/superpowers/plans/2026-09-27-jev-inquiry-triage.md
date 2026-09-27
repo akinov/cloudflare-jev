@@ -6,7 +6,7 @@
 
 **Architecture:** 質問と閾値はプリセットファイルに置く。Hono の `/api` が認証と入力検証を行い、`decide` がモデルの答えを action に変える。画面は `public/index.html` 一枚で、Workers Static Assets が配信する。
 
-**Tech Stack:** pnpm、TypeScript、Hono、Zod、`@hono/zod-validator`、Wrangler、Vitest、`@cloudflare/vitest-pool-workers`
+**Tech Stack:** pnpm、TypeScript、Hono、Zod、`@hono/zod-validator`、Wrangler、Vitest、`@cloudflare/vitest-plugin`
 
 **仕様:** `docs/superpowers/specs/2026-09-27-jev-inquiry-triage-design.md`
 
@@ -28,7 +28,7 @@
 
 `package.json` の `packageManager` は pnpm。scripts は `dev` = `wrangler dev`、`deploy` = `wrangler deploy`、`test` = `vitest`、`cf-typegen` = `wrangler types --env-interface CloudflareBindings`。
 
-依存: `hono`、`zod`、`@hono/zod-validator`。開発依存: `wrangler`、`typescript`、`vitest`、`@cloudflare/vitest-pool-workers`、`@cloudflare/workers-types`。
+依存: `hono`、`zod`、`@hono/zod-validator`。開発依存: `wrangler`、`typescript`、`vitest`、`@cloudflare/vitest-plugin`、`@cloudflare/workers-types`。
 
 `wrangler.jsonc`:
 
@@ -52,7 +52,7 @@
 
 `.gitignore` は `node_modules/`、`.wrangler/`、`.dev.vars`、`dist/`。`.dev.vars.example` は `TRIAGE_TOKEN=` のみ。トークン値は書かない。
 
-`vitest.config.ts` は `@cloudflare/vitest-plugin` の `cloudflareTest()` と Vitest の `defineConfig` で `wrangler.jsonc` を読む。`remoteBindings` は false。テスト用の `TRIAGE_TOKEN` は `miniflare.bindings` に置く。設計が名指しする `@cloudflare/vitest-pool-workers@0.22` の workerd は compatibility date の上限が 2026-08-22 で、指定の `2026-09-27` を起動できない。後継の `@cloudflare/vitest-plugin` を使う。テスト用の型は `test/tsconfig.json` の `types` に `@cloudflare/vitest-plugin/types` を置く。
+`vitest.config.ts` は `@cloudflare/vitest-plugin` の `cloudflareTest()` と Vitest の `defineConfig` で `wrangler.jsonc` を読む。`remoteBindings` は false。テスト用の `TRIAGE_TOKEN` は `miniflare.bindings` に置く。Hono のテストガイドは Cloudflare の Vitest 連携に従い、現行の案内は `@cloudflare/vitest-plugin` である。`@cloudflare/vitest-pool-workers@0.22` の workerd は compatibility date の上限が 2026-08-22 で、指定の `2026-09-27` を起動できない。テスト用の型は `test/tsconfig.json` の `types` に `@cloudflare/vitest-plugin/types` を置く。
 
 - [ ] **Step 2: インストールと型生成**
 

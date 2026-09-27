@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
-import { Hono } from 'hono'
 import { z } from 'zod'
+import { factory } from '../factory'
 import { bearer } from '../middleware/bearer'
 import { presets } from '../presets/registry'
 import { runTriage } from '../triage'
@@ -30,7 +30,7 @@ function formatZodError(error: z.core.$ZodError): string {
     .join('; ')
 }
 
-export const api = new Hono<{ Bindings: CloudflareBindings }>()
+export const api = factory.createApp()
   .use('*', bearer)
   .get('/presets', (c) => {
     return c.json({

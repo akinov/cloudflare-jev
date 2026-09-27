@@ -1,8 +1,8 @@
-import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { factory } from './factory'
 import { api } from './routes/api'
 
-const app = new Hono<{ Bindings: CloudflareBindings }>()
+const app = factory.createApp()
 
 app.route('/api', api)
 
@@ -19,8 +19,7 @@ app.onError((error, c) => {
     return error.getResponse()
   }
 
-  const message = error instanceof Error ? error.message.slice(0, 200) : 'internal_error'
-  console.error(JSON.stringify({ status: 500, message }))
+  console.error(error)
   return c.json({ error: 'internal_error' }, 500)
 })
 

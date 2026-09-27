@@ -28,7 +28,7 @@
 
 ## 計画から変えたところ
 
-- テストランナーは `@cloudflare/vitest-plugin@1.2.8` の `cloudflareTest()`。設計に書いてある `@cloudflare/vitest-pool-workers@0.22` の workerd は compatibility date の上限が 2026-08-22 で、指定の `2026-09-27` を起動できない。
+- テストランナーは `@cloudflare/vitest-plugin@1.2.8` の `cloudflareTest()`。Hono のテストガイドが従う Cloudflare の現行案内はこちらで、`@cloudflare/vitest-pool-workers@0.22` の workerd は compatibility date の上限が 2026-08-22 で、指定の `2026-09-27` を起動できない。
 - `vitest.config.ts` の `remoteBindings` は false。true だとリモートプロキシが `CLOUDFLARE_API_TOKEN` を要求する。テスト用トークンは `process.env.TRIAGE_TOKEN ??= 'test-token'`。
 - `nodejs_compat` のため `@types/node` を足した。
 - pnpm 12 は `package.json` の `pnpm` フィールドを読まない。`pnpm-workspace.yaml` の `allowBuilds` で `esbuild` と `workerd` の install script を許可している。
