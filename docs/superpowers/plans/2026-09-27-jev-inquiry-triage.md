@@ -56,7 +56,7 @@
 
 - [ ] **Step 2: インストールと型生成**
 
-Run: `pnpm install`
+pnpm を [公式手順](https://pnpm.io/ja/installation)で入れる（Corepack は使わない）。プロジェクト直下で `pnpm self-update` してから `pnpm install`。
 Run: `pnpm cf-typegen`
 Expected: `worker-configuration.d.ts` の `CloudflareBindings` に `AI` と `TRIAGE_TOKEN: string` がある。
 

@@ -5,6 +5,22 @@ import app from '../src/index'
 
 const token = 'test-token'
 
+type ApiErrorBody = { error: string; details?: string }
+type TriageOkBody = {
+  decision: {
+    action: string
+    signals: { route: { choice: string } }
+  }
+}
+type PresetsBody = {
+  presets: Array<{
+    id: string
+    description?: string
+    questions: Record<string, { type: string }>
+    policy: { routeOn: { question: string } }
+  }>
+}
+
 function modelAnswers(choice = 'support') {
   return {
     department: {
@@ -93,7 +109,7 @@ describe('POST /api/triage', () => {
   it('rejects invalid JSON bodies', async () => {
     const extra = await post({ body: '本文', extra: true })
     expect(extra.status).toBe(400)
-    const extraJson = await extra.json()
+    const extraJson = (await extra.json()) as ApiErrorBody
     expect(extraJson).toMatchObject({ error: 'invalid_request' })
     expect(extraJson.details).toContain('extra')
 
@@ -103,7 +119,7 @@ describe('POST /api/triage', () => {
 
     const wrongType = await post({ body: '本文', subject: 1 })
     expect(wrongType.status).toBe(400)
-    expect((await wrongType.json()).details).toContain('subject')
+    expect(((await wrongType.json()) as ApiErrorBody).details).toContain('subject')
 
     const malformed = await post(undefined, { raw: '{' })
     expect(malformed.status).toBe(400)
@@ -114,7 +130,7 @@ describe('POST /api/triage', () => {
 
     const untyped = await post({ body: '本文' }, { contentType: null })
     expect(untyped.status).toBe(400)
-    expect((await untyped.json()).error).toBe('invalid_request')
+    expect(((await untyped.json()) as ApiErrorBody).error).toBe('invalid_request')
   })
 
   it('returns 404 for an unknown preset', async () => {
@@ -161,7 +177,7 @@ describe('POST /api/triage', () => {
       { run: async () => ({ model: 'jev-1.13.0', answers: modelAnswers('warehouse'), usage: {} }) },
     )
     expect(response.status).toBe(200)
-    const json = await response.json()
+    const json = (await response.json()) as TriageOkBody
     expect(json.decision.action).toBe('needs_review')
     expect(json.decision.signals.route.choice).toBe('warehouse')
   })
@@ -177,12 +193,13 @@ describe('GET /api/presets', () => {
     try {
       const response = await app.request('/api/presets', { headers: { Authorization: `Bearer ${token}` } }, bindings(async () => ({})))
       expect(response.status).toBe(200)
-      const json = await response.json()
-      const extra = json.presets.find((preset: { id: string }) => preset.id === 'extra')
-      const initial = json.presets.find((preset: { id: string }) => preset.id === 'inquiry-triage')
+      const json = (await response.json()) as PresetsBody
+      const extra = json.presets.find((preset) => preset.id === 'extra')
+      const initial = json.presets.find((preset) => preset.id === 'inquiry-triage')
       expect(extra).toMatchObject({ id: 'extra', description: 'extra preset' })
-      expect(initial.questions.department.type).toBe('choice')
-      expect(initial.policy.routeOn.question).toBe('department')
+      expect(initial).toBeDefined()
+      expect(initial!.questions.department.type).toBe('choice')
+      expect(initial!.policy.routeOn.question).toBe('department')
     } finally {
       delete presets.extra
     }

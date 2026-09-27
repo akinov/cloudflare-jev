@@ -40,7 +40,8 @@
 - テストランナーは `@cloudflare/vitest-plugin@1.2.8` の `cloudflareTest()`。設計に書いてある `@cloudflare/vitest-pool-workers@0.22` の workerd は compatibility date の上限が 2026-08-22 で、指定の `2026-09-27` を起動できない。
 - `vitest.config.ts` の `remoteBindings` は false。true だとリモートプロキシが `CLOUDFLARE_API_TOKEN` を要求する。テスト用トークンは `process.env.TRIAGE_TOKEN ??= 'test-token'`。
 - `nodejs_compat` のため `@types/node` を足した。
-- pnpm 11 は `package.json` の `pnpm` フィールドを読まない。`pnpm-workspace.yaml` の `allowBuilds` で `esbuild` と `workerd` の install script を許可している。
+- pnpm 12 は `package.json` の `pnpm` フィールドを読まない。`pnpm-workspace.yaml` の `allowBuilds` で `esbuild` と `workerd` の install script を許可している。
+- pnpm の導入は [公式 Installation](https://pnpm.io/ja/installation)（standalone スクリプトまたは `npx get-pnpm`）。Corepack は使わない。バージョン合わせは `pnpm self-update`（`packageManager` ピンを参照）。
 - ストアはプロジェクト内の `.pnpm-store/`。gitignore 済み。消さない。
 - `decide` の数値判定は `Number.isFinite`。`NaN` と `Infinity` は JSON にすると `null` になる。
 - Score の `legend` は公式応答どおり、インデックス文字列をキーにしたオブジェクト。
