@@ -8,7 +8,7 @@
 
 ## 次にやること
 
-1. 画面はブラウザで、トークン保存、プリセット表示、送信、サンプル投入まで確認する。`pnpm dev` の前に gitignore 済みの `.dev.vars` へ `TRIAGE_TOKEN=` を書く。値はソースと `wrangler.jsonc` に置かない。
+1. 画面はブラウザで、トークン保存、プリセット表示、送信、サンプル投入まで確認する。`pnpm dev` の前に gitignore 済みの `.dev.vars` へ `TRIAGE_TOKEN=` を書く。値はソースと `wrangler.jsonc` に置かない。Wrangler 4 は `ai.binding` をリモート接続するため、ローカル dev では `CLOUDFLARE_API_TOKEN` が要る場合がある（未設定だと dev が起動しない）。
 2. 全テストは `pnpm exec vitest run`。Workers のテストランナーはローカルの Wrangler ログに書くため、サンドボックスでは権限が要ることがある。
 3. 実装ブランチの統合（merge / PR）は別途判断。
 
@@ -24,7 +24,7 @@
 | 4. Bearer | 完了 | `test/bearer.test.ts` 5 件 |
 | 5. 推論の結合 | 完了 | `test/triage.test.ts` 5 件 |
 | 6. HTTP API | 完了（サブエージェントレビュー済み） | `test/api.test.ts` 9 件、`tsc --noEmit` OK |
-| 7. 試す画面 | 実装済み、ブラウザ確認待ち | `public/index.html` |
+| 7. 試す画面 | 実装済み・コミット済み、ブラウザ確認待ち | `public/index.html`（`11da6e5`） |
 
 ## 計画から変えたところ
 
@@ -44,4 +44,4 @@ Vitest 起動時に「AI bindings always access remote resources」と出る。`
 
 ## 触らないこと
 
-仕様の「今回やらないこと」に従う。コミットとデプロイは、このセッションでは頼まれていない。
+仕様の「今回やらないこと」に従う。デプロイは別途。
