@@ -95,7 +95,29 @@ describe('runTriage', () => {
     try {
       await expectHttpError(runTriage({ subject, body, presetId: 'inquiry-triage' }, runModel), 502, 'model_unavailable')
       expect(runModel).toHaveBeenCalledTimes(1)
-      expect(errors).toEqual([JSON.stringify({ status: 429, message: 'rate limited' })])
+      expect(errors).toEqual([JSON.stringify({ status: 429, message: 'model request failed' })])
+      expect(errors.join('\n')).not.toContain(subject)
+      expect(errors.join('\n')).not.toContain(body)
+    } finally {
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('does not log subject or body when the model error message echoes them', async () => {
+    const error = new Error(`upstream failed for ${subject}: ${body}`) as Error & { status: number }
+    error.status = 503
+    const runModel = vi.fn(async () => {
+      throw error
+    })
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
+      errors.push(String(line))
+    })
+
+    try {
+      await expectHttpError(runTriage({ subject, body, presetId: 'inquiry-triage' }, runModel), 502, 'model_unavailable')
+      expect(runModel).toHaveBeenCalledTimes(1)
+      expect(errors).toEqual([JSON.stringify({ status: 503, message: 'model request failed' })])
       expect(errors.join('\n')).not.toContain(subject)
       expect(errors.join('\n')).not.toContain(body)
     } finally {
@@ -137,6 +159,28 @@ describe('runTriage', () => {
       expect(errors.join('\n')).not.toContain(body)
     } finally {
       delete presets.broken
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('returns 500 when registry key and preset.id mismatch', async () => {
+    const mismatched: Preset = {
+      ...presets['inquiry-triage']!,
+      id: 'other-id',
+    }
+    presets['key-mismatch'] = mismatched
+    const runModel = vi.fn()
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => {
+      errors.push(String(line))
+    })
+    try {
+      await expectHttpError(runTriage({ subject, body, presetId: 'key-mismatch' }, runModel), 500, 'internal_error')
+      expect(runModel).not.toHaveBeenCalled()
+      expect(errors.join('\n')).not.toContain(subject)
+      expect(errors.join('\n')).not.toContain(body)
+    } finally {
+      delete presets['key-mismatch']
       vi.restoreAllMocks()
     }
   })

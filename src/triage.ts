@@ -33,8 +33,7 @@ function httpError(status: 404 | 500 | 502, error: string): HTTPException {
 
 function modelFailureLog(error: unknown): { status: number | null; message: string } {
   const status = isRecord(error) && isNumber(error.status) ? error.status : null
-  const message = error instanceof Error ? error.message.slice(0, 200) : 'model request failed'
-  return { status, message }
+  return { status, message: 'model request failed' }
 }
 
 export async function runTriage(
@@ -42,7 +41,7 @@ export async function runTriage(
   runModel: (model: 'typesafe/jev', payload: ModelInput) => Promise<unknown>,
 ): Promise<TriageResult> {
   const preset = presets[input.presetId]
-  if (!preset || preset.id !== input.presetId) {
+  if (!preset) {
     throw httpError(404, 'unknown_preset')
   }
 
