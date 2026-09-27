@@ -154,7 +154,7 @@ Score の `legend` は公式応答どおり、インデックス文字列をキ�
 
 `api` は `.use('*', bearer).get('/presets', ...).post('/triage', ...)` のチェーン。`export type ApiType = typeof api`。スキーマは `z.strictObject`。文字列は trim してから長さを見る。`subject` 省略は `""`、`preset` 省略は `inquiry-triage`。
 
-`onError` はメッセージが `Malformed JSON in request body` の `HTTPException` を 400 `{ "error": "invalid_request", "details": "Malformed JSON in request body" }` にする。他の `HTTPException` は `getResponse()`。それ以外はログして 500 `{ "error": "internal_error" }`。`passThroughOnException` は使わない。
+`onError` は、カスタム `res` が無く status が 400 の `HTTPException` を 400 `{ "error": "invalid_request", "details": <例外の message> }` にする。文言では分岐しない。他の `HTTPException` は `getResponse()`。それ以外はログして 500 `{ "error": "internal_error" }`。`passThroughOnException` は使わない。`HTTPException` の `res` には status を付けない。
 
 - [ ] **Step 4: テストが通ることを確認する**
 

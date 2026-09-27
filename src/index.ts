@@ -10,11 +10,8 @@ app.notFound((c) => c.json({ error: 'not_found' }, 404))
 
 app.onError((error, c) => {
   if (error instanceof HTTPException) {
-    if (error.message === 'Malformed JSON in request body') {
-      return c.json(
-        { error: 'invalid_request', details: 'Malformed JSON in request body' },
-        400,
-      )
+    if (error.status === 400 && !error.res) {
+      return c.json({ error: 'invalid_request', details: error.message }, 400)
     }
     return error.getResponse()
   }

@@ -121,10 +121,10 @@ public/index.html
 
 - `app.route('/api', api)`
 - `app.notFound` は `{ "error": "not_found" }` を 404 で返す
-- `app.onError` は、メッセージが `Malformed JSON in request body` の `HTTPException` を 400 と `{ "error": "invalid_request", "details": "Malformed JSON in request body" }` に変える。これはバリデータが本文だけの `HTTPException` を投げるためで、それ以外の `HTTPException` は例外ガイドどおり `getResponse()` を返す。どちらでもない例外は `console.error(error)` したあと `{ "error": "internal_error" }` を 500 で返す。エラー本文は JSON なので `c.json` にする
+- `app.onError` は、カスタム `res` が無く status が 400 の `HTTPException` を 400 と `{ "error": "invalid_request", "details": <例外の message> }` に変える。バリデータが壊れた JSON に投げるのはこの形で、文言では分岐しない。それ以外の `HTTPException` は例外ガイドどおり `getResponse()` を返す。どちらでもない例外は `console.error(error)` したあと `{ "error": "internal_error" }` を 500 で返す。エラー本文は JSON なので `c.json` にする
 - `export default app`
 
-推論失敗は `HTTPException(502, { res })`、プリセット定義の不備は `HTTPException(500, { res })` として投げ、レスポンス JSON は「エラー一覧」に合わせる。
+推論失敗は `HTTPException(502, { res })`、プリセット定義の不備は `HTTPException(500, { res })` として投げる。`res` は `Response.json` の本文だけで、status はコンストラクタにだけ付ける。例外ガイドは Response 側の status を使わない。レスポンス JSON は「エラー一覧」に合わせる。
 
 `POST /api/triage` の JSON は `zValidator('json', schema, hook)` にかける。スキーマは `z.strictObject` で、未知のキーを失敗にする。スキーマ不一致のとき、hook は 400 と `{ "error": "invalid_request", "details": "<どの項目がどの規則に反したか>" }` を返す。`Content-Type: application/json` が無いと Hono は JSON をパースせず、バリデータには空オブジェクトが渡るので、hook が同じ 400 を返す。`Content-Type` が JSON でも本文が壊れているときは、hook の前に Hono が `HTTPException(400)` を投げる。これは `onError` が上の `invalid_request` JSON に変える。テストで JSON を送るときも `Content-Type: application/json` を付ける。
 
@@ -316,7 +316,7 @@ type Decision = {
 
 Zod では次の順に処理する。未知キーは `z.strictObject` で失敗させる。`body` は文字列必須、`subject` と `preset` はキー省略を許す。文字列フィールドは先に trim し、そのあと長さを見る。`subject` の省略は trim 後の `""` と同じ値にする。`preset` の省略は `inquiry-triage` にする。型が文字列でない値は 400 にする。
 
-`Content-Type` が `application/json` でない、上記のフィールド規則に反する、未知のフィールドがある、のときは `400` と `{ "error": "invalid_request", "details": "<どの規則に反したか>" }`。これは `zValidator` の hook が返す。JSON として読めない本文は hook に届かず、`onError` が同じ `error` の 400 を返す。`details` はそのとき `Malformed JSON in request body` である。
+`Content-Type` が `application/json` でない、上記のフィールド規則に反する、未知のフィールドがある、のときは `400` と `{ "error": "invalid_request", "details": "<どの規則に反したか>" }`。これは `zValidator` の hook が返す。JSON として読めない本文は hook に届かず、バリデータが本文だけの `HTTPException(400)` を投げる。`onError` はそれを `{ "error": "invalid_request", "details": <例外の message> }` にする。現行の Hono では message は `Malformed JSON in request body` である。
 
 成功時 `200`:
 

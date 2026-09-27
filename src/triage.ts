@@ -27,7 +27,7 @@ function isNumber(value: unknown): value is number {
 
 function httpError(status: 404 | 500 | 502, error: string): HTTPException {
   return new HTTPException(status, {
-    res: Response.json({ error }, { status }),
+    res: Response.json({ error }),
   })
 }
 
